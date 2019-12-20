@@ -8,6 +8,12 @@ import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import scala.concurrent.duration._
 import scala.util.Random
 
+/*
+  Scala with Cats, Chapter 8:
+  Case Study: Testing Asynchronous Code
+  https://books.underscore.io/scala-with-cats/scala-with-cats.html#sec:case-studies:testing
+*/
+
 trait UptimeClient[F[_]] {
   def getUptime(hostname: String): F[Int]
 }
@@ -40,12 +46,14 @@ trait UptimeService[F[_]] {
 }
 
 object UptimeService {
+  /** Sequential execution of uptime per host. */
   def seq[F[_]: Monad](client: UptimeClient[F]): UptimeService[F] =
     hostnames =>
       hostnames
         .traverse(client.getUptime)
         .map(_.sum)
 
+  /** Parallel execution of uptime per host. */
   def par[F[_]: Monad: Parallel](client: UptimeClient[F]): UptimeService[F] =
     hostnames =>
       hostnames
